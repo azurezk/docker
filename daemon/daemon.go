@@ -55,6 +55,7 @@ import (
 	"github.com/docker/docker/volume/local"
 	"github.com/docker/docker/volume/store"
 	"github.com/docker/libnetwork"
+	"github.com/docker/docker/opts"
 )
 
 var (
@@ -1284,4 +1285,30 @@ func (daemon *Daemon) SearchRegistryForImages(term string,
 	authConfig *cliconfig.AuthConfig,
 	headers map[string][]string) (*registry.SearchResults, error) {
 	return daemon.RegistryService.Search(term, authConfig, headers)
+}
+	
+//func (daemon *Daemon) AddInsecureRegistry(insecureRegistries []string) error{
+func (daemon *Daemon) AddInsecureRegistry(insecureRegistry string) error{	
+	
+//	fmt.Println("OOOPPPPPOOPOP")
+//	fmt.Println(daemon.RegistryService.Config.InsecureRegistryCIDRs)
+//	fmt.Println(daemon.RegistryService.Config.IndexConfigs)
+//	fmt.Println(daemon.RegistryService.Config.Mirrors)
+//	fmt.Println(insecureRegistry)
+//	fmt.Println("XXXXXXXXXXXXXXXXX-")
+	
+	registryOptions := new(registry.Options)
+	registryOptions.Mirrors = *opts.NewListOptsRef(&daemon.RegistryService.Config.Mirrors,registry.ValidateMirror)
+	
+	//fix: should add origin insecureRegistries
+	value := []string{insecureRegistry}
+	registryOptions.InsecureRegistries = *opts.NewListOptsRef(&value, registry.ValidateIndexName)
+	//registryOptions.InsecureRegistries = *opts.NewListOptsRef(&insecureRegistries, registry.ValidateIndexName)
+	
+	fmt.Println("new option:", registryOptions.InsecureRegistries.GetAll())
+	registryService := registry.NewService(registryOptions)
+	
+	*daemon.RegistryService = *registryService
+	
+	return nil
 }
